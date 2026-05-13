@@ -1,0 +1,143 @@
+package com.grupo2is2.arrendamiento.service;
+
+import com.grupo2is2.arrendamiento.domain.Property;
+import com.grupo2is2.arrendamiento.domain.PropertyStatus;
+import com.grupo2is2.arrendamiento.domain.User;
+import com.grupo2is2.arrendamiento.dto.PropertyDto;
+import com.grupo2is2.arrendamiento.repository.PropertyRepository;
+import com.grupo2is2.arrendamiento.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class PropertyServiceImpl implements PropertyService {
+
+    private final PropertyRepository propertyRepository;
+    private final UserRepository userRepository;
+
+    @Override
+    public List<PropertyDto> getAll() {
+        return propertyRepository.findAll().stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public PropertyDto getById(Long id) {
+        Property property = propertyRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Propiedad no encontrada"));
+        return toDto(property);
+    }
+
+    @Override
+    public List<PropertyDto> getByOwner(Long ownerId) {
+        User owner = userRepository.findById(ownerId)
+                .orElseThrow(() -> new RuntimeException("Propietario no encontrado"));
+        return propertyRepository.findByOwner(owner).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<PropertyDto> getByTenant(String tenantName) {
+        return propertyRepository.findByTenant(tenantName).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<PropertyDto> getAvailable() {
+        return propertyRepository.findByStatus(PropertyStatus.DISPONIBLE).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public PropertyDto create(PropertyDto dto) {
+        User owner = userRepository.findById(dto.getOwnerId())
+                .orElseThrow(() -> new RuntimeException("Propietario no encontrado"));
+
+        Property property = Property.builder()
+                .name(dto.getName())
+                .address(dto.getAddress())
+                .type(dto.getType())
+                .bedrooms(dto.getBedrooms())
+                .bathrooms(dto.getBathrooms())
+                .area(dto.getArea())
+                .rent(dto.getRent())
+                .status(dto.getStatus())
+                .description(dto.getDescription())
+                .yearBuilt(dto.getYearBuilt())
+                .floors(dto.getFloors())
+                .furnished(dto.getFurnished())
+                .amenities(dto.getAmenities() != null ? dto.getAmenities() : List.of())
+                .tenant(dto.getTenant())
+                .owner(owner)
+                .build();
+
+        Property saved = propertyRepository.save(property);
+        return toDto(saved);
+    }
+
+    @Override
+    public PropertyDto update(Long id, PropertyDto dto) {
+        Property property = propertyRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Propiedad no encontrada"));
+
+        property.setName(dto.getName());
+        property.setAddress(dto.getAddress());
+        property.setType(dto.getType());
+        property.setBedrooms(dto.getBedrooms());
+        property.setBathrooms(dto.getBathrooms());
+        property.setArea(dto.getArea());
+        property.setRent(dto.getRent());
+        property.setStatus(dto.getStatus());
+        property.setDescription(dto.getDescription());
+        property.setYearBuilt(dto.getYearBuilt());
+        property.setFloors(dto.getFloors());
+        property.setFurnished(dto.getFurnished());
+        property.setAmenities(dto.getAmenities() != null ? dto.getAmenities() : List.of());
+        property.setTenant(dto.getTenant());
+
+        if (dto.getOwnerId() != null) {
+            User owner = userRepository.findById(dto.getOwnerId())
+                    .orElseThrow(() -> new RuntimeException("Propietario no encontrado"));
+            property.setOwner(owner);
+        }
+
+        Property updated = propertyRepository.save(property);
+        return toDto(updated);
+    }
+
+    @Override
+    public void delete(Long id) {
+        propertyRepository.deleteById(id);
+    }
+
+    private PropertyDto toDto(Property property) {
+        return PropertyDto.builder()
+                .id(property.getId())
+                .name(property.getName())
+                .address(property.getAddress())
+                .type(property.getType())
+                .bedrooms(property.getBedrooms())
+                .bathrooms(property.getBathrooms())
+                .area(property.getArea())
+                .rent(property.getRent())
+                .status(property.getStatus())
+                .description(property.getDescription())
+                .yearBuilt(property.getYearBuilt())
+                .floors(property.getFloors())
+                .furnished(property.getFurnished())
+                .amenities(property.getAmenities())
+                .tenant(property.getTenant())
+                .ownerId(property.getOwner() != null ? property.getOwner().getId() : null)
+                .createdAt(property.getCreatedAt())
+                .updatedAt(property.getUpdatedAt())
+                .build();
+    }
+}
