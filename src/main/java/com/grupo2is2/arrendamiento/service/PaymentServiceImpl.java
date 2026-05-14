@@ -3,9 +3,11 @@ package com.grupo2is2.arrendamiento.service;
 import com.grupo2is2.arrendamiento.domain.Contract;
 import com.grupo2is2.arrendamiento.domain.Payment;
 import com.grupo2is2.arrendamiento.domain.PaymentStatus;
+import com.grupo2is2.arrendamiento.domain.User;
 import com.grupo2is2.arrendamiento.dto.PaymentDto;
 import com.grupo2is2.arrendamiento.repository.ContractRepository;
 import com.grupo2is2.arrendamiento.repository.PaymentRepository;
+import com.grupo2is2.arrendamiento.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,17 +20,18 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final ContractRepository contractRepository;
+    private final UserRepository userRepository;
 
     @Override
     public List<PaymentDto> getAll() {
-        return paymentRepository.findAll().stream()
+        return paymentRepository.findAllWithUser().stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     public PaymentDto getById(Long id) {
-        Payment payment = paymentRepository.findById(id)
+        Payment payment = paymentRepository.findByIdWithUser(id)
                 .orElseThrow(() -> new RuntimeException("Pago no encontrado"));
         return toDto(payment);
     }
@@ -43,8 +46,8 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public List<PaymentDto> getByTenant(String tenantName) {
-        return paymentRepository.findByTenant(tenantName).stream()
+    public List<PaymentDto> getByTenant(Long tenantId) {
+        return paymentRepository.findByTenantIdWithUser(tenantId).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
@@ -61,10 +64,15 @@ public class PaymentServiceImpl implements PaymentService {
         Contract contract = contractRepository.findById(dto.getContractId())
                 .orElseThrow(() -> new RuntimeException("Contrato no encontrado"));
 
+        User tenant = null;
+        if (dto.getTenantId() != null) {
+            tenant = userRepository.findById(dto.getTenantId())
+                    .orElseThrow(() -> new RuntimeException("Inquilino no encontrado"));
+        }
+
         Payment payment = Payment.builder()
                 .contract(contract)
-                .tenant(dto.getTenant())
-                .tenantEmail(dto.getTenantEmail())
+                .tenant(tenant)
                 .property(dto.getProperty())
                 .propertyAddress(dto.getPropertyAddress())
                 .amount(dto.getAmount())
@@ -86,8 +94,6 @@ public class PaymentServiceImpl implements PaymentService {
         Payment payment = paymentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pago no encontrado"));
 
-        payment.setTenant(dto.getTenant());
-        payment.setTenantEmail(dto.getTenantEmail());
         payment.setProperty(dto.getProperty());
         payment.setPropertyAddress(dto.getPropertyAddress());
         payment.setAmount(dto.getAmount());
@@ -105,6 +111,14 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setContract(contract);
         }
 
+        if (dto.getTenantId() != null) {
+            User tenant = userRepository.findById(dto.getTenantId())
+                    .orElseThrow(() -> new RuntimeException("Inquilino no encontrado"));
+            payment.setTenant(tenant);
+        } else {
+            payment.setTenant(null);
+        }
+
         Payment updated = paymentRepository.save(payment);
         return toDto(updated);
     }
@@ -115,11 +129,14 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private PaymentDto toDto(Payment payment) {
+        User tenant = payment.getTenant();
+
         return PaymentDto.builder()
                 .id(payment.getId())
                 .contractId(payment.getContract() != null ? payment.getContract().getId() : null)
-                .tenant(payment.getTenant())
-                .tenantEmail(payment.getTenantEmail())
+                .tenantId(tenant != null ? tenant.getId() : null)
+                .tenantName(tenant != null ? tenant.getName() : null)
+                .tenantEmail(tenant != null ? tenant.getEmail() : null)
                 .property(payment.getProperty())
                 .propertyAddress(payment.getPropertyAddress())
                 .amount(payment.getAmount())

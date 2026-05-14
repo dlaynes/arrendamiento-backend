@@ -2,9 +2,11 @@ package com.grupo2is2.arrendamiento.service;
 
 import com.grupo2is2.arrendamiento.domain.Contract;
 import com.grupo2is2.arrendamiento.domain.Property;
+import com.grupo2is2.arrendamiento.domain.User;
 import com.grupo2is2.arrendamiento.dto.ContractDto;
 import com.grupo2is2.arrendamiento.repository.ContractRepository;
 import com.grupo2is2.arrendamiento.repository.PropertyRepository;
+import com.grupo2is2.arrendamiento.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,40 +19,46 @@ public class ContractServiceImpl implements ContractService {
 
     private final ContractRepository contractRepository;
     private final PropertyRepository propertyRepository;
+    private final UserRepository userRepository;
 
     @Override
     public List<ContractDto> getAll() {
-        return contractRepository.findAll().stream()
+        return contractRepository.findAllWithUsers().stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     public ContractDto getById(Long id) {
-        Contract contract = contractRepository.findById(id)
+        Contract contract = contractRepository.findByIdWithUsers(id)
                 .orElseThrow(() -> new RuntimeException("Contrato no encontrado"));
         return toDto(contract);
     }
 
     @Override
     public List<ContractDto> getByOwner(Long ownerId) {
-        return contractRepository.findByPropertyOwnerId(ownerId).stream()
+        return contractRepository.findByPropertyOwnerIdWithUsers(ownerId).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<ContractDto> getByTenant(String tenantName) {
-        return contractRepository.findByTenant(tenantName).stream()
+    public List<ContractDto> getByTenant(Long tenantId) {
+        return contractRepository.findByTenantIdWithUsers(tenantId).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ContractDto> getByLandlord(Long landlordId) {
+        return contractRepository.findByLandlordIdWithUsers(landlordId).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<ContractDto> getByProperty(Long propertyId) {
-        Property property = propertyRepository.findById(propertyId)
-                .orElseThrow(() -> new RuntimeException("Propiedad no encontrada"));
-        return contractRepository.findByProperty(property).stream()
+        return contractRepository.findByPropertyIdWithUsers(propertyId).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
@@ -60,11 +68,16 @@ public class ContractServiceImpl implements ContractService {
         Property property = propertyRepository.findById(dto.getPropertyId())
                 .orElseThrow(() -> new RuntimeException("Propiedad no encontrada"));
 
+        User tenant = userRepository.findById(dto.getTenantId())
+                .orElseThrow(() -> new RuntimeException("Inquilino no encontrado"));
+
+        User landlord = userRepository.findById(dto.getLandlordId())
+                .orElseThrow(() -> new RuntimeException("Arrendador no encontrado"));
+
         Contract contract = Contract.builder()
                 .code(dto.getCode())
-                .tenant(dto.getTenant())
-                .tenantEmail(dto.getTenantEmail())
-                .tenantPhone(dto.getTenantPhone())
+                .tenant(tenant)
+                .landlord(landlord)
                 .property(property)
                 .startDate(dto.getStartDate())
                 .endDate(dto.getEndDate())
@@ -86,9 +99,6 @@ public class ContractServiceImpl implements ContractService {
                 .orElseThrow(() -> new RuntimeException("Contrato no encontrado"));
 
         contract.setCode(dto.getCode());
-        contract.setTenant(dto.getTenant());
-        contract.setTenantEmail(dto.getTenantEmail());
-        contract.setTenantPhone(dto.getTenantPhone());
         contract.setStartDate(dto.getStartDate());
         contract.setEndDate(dto.getEndDate());
         contract.setMonthlyRent(dto.getMonthlyRent());
@@ -104,6 +114,18 @@ public class ContractServiceImpl implements ContractService {
             contract.setProperty(property);
         }
 
+        if (dto.getTenantId() != null) {
+            User tenant = userRepository.findById(dto.getTenantId())
+                    .orElseThrow(() -> new RuntimeException("Inquilino no encontrado"));
+            contract.setTenant(tenant);
+        }
+
+        if (dto.getLandlordId() != null) {
+            User landlord = userRepository.findById(dto.getLandlordId())
+                    .orElseThrow(() -> new RuntimeException("Arrendador no encontrado"));
+            contract.setLandlord(landlord);
+        }
+
         Contract updated = contractRepository.save(contract);
         return toDto(updated);
     }
@@ -114,15 +136,22 @@ public class ContractServiceImpl implements ContractService {
     }
 
     private ContractDto toDto(Contract contract) {
+        User tenant = contract.getTenant();
+        User landlord = contract.getLandlord();
+        Property property = contract.getProperty();
+
         return ContractDto.builder()
                 .id(contract.getId())
                 .code(contract.getCode())
-                .tenant(contract.getTenant())
-                .tenantEmail(contract.getTenantEmail())
-                .tenantPhone(contract.getTenantPhone())
-                .propertyId(contract.getProperty() != null ? contract.getProperty().getId() : null)
-                .property(contract.getProperty() != null ? contract.getProperty().getName() : null)
-                .propertyAddress(contract.getProperty() != null ? contract.getProperty().getAddress() : null)
+                .tenantId(tenant != null ? tenant.getId() : null)
+                .tenantName(tenant != null ? tenant.getName() : null)
+                .tenantEmail(tenant != null ? tenant.getEmail() : null)
+                .landlordId(landlord != null ? landlord.getId() : null)
+                .landlordName(landlord != null ? landlord.getName() : null)
+                .landlordEmail(landlord != null ? landlord.getEmail() : null)
+                .propertyId(property != null ? property.getId() : null)
+                .property(property != null ? property.getName() : null)
+                .propertyAddress(property != null ? property.getAddress() : null)
                 .startDate(contract.getStartDate())
                 .endDate(contract.getEndDate())
                 .monthlyRent(contract.getMonthlyRent())

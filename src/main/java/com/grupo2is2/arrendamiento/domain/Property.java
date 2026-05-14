@@ -44,13 +44,14 @@ public class Property {
 
     private Boolean furnished;
 
-    @ElementCollection
-    @CollectionTable(name = "property_amenities", joinColumns = @JoinColumn(name = "property_id"))
-    @Column(name = "amenity")
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "property_amenities",
+        joinColumns = @JoinColumn(name = "property_id"),
+        inverseJoinColumns = @JoinColumn(name = "amenity_id")
+    )
     @Builder.Default
-    private List<String> amenities = new ArrayList<>();
-
-    private String tenant;
+    private List<Amenity> amenities = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")

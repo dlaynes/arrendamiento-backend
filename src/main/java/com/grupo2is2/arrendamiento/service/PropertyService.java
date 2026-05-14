@@ -8,7 +8,6 @@ public interface PropertyService {
     List<PropertyDto> getAll();
     PropertyDto getById(Long id);
     List<PropertyDto> getByOwner(Long ownerId);
-    List<PropertyDto> getByTenant(String tenantName);
     List<PropertyDto> getAvailable();
     PropertyDto create(PropertyDto dto);
     PropertyDto update(Long id, PropertyDto dto);

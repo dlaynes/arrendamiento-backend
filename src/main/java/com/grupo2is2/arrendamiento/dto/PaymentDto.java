@@ -12,7 +12,8 @@ import java.time.LocalDateTime;
 public class PaymentDto {
     private Long id;
     private Long contractId;
-    private String tenant;
+    private Long tenantId;
+    private String tenantName;
     private String tenantEmail;
     private String property;
     private String propertyAddress;

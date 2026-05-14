@@ -29,9 +29,9 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.getByContract(contractId));
     }
 
-    @GetMapping("/tenant/{tenantName}")
-    public ResponseEntity<List<PaymentDto>> getByTenant(@PathVariable String tenantName) {
-        return ResponseEntity.ok(paymentService.getByTenant(tenantName));
+    @GetMapping("/tenant/{tenantId}")
+    public ResponseEntity<List<PaymentDto>> getByTenant(@PathVariable Long tenantId) {
+        return ResponseEntity.ok(paymentService.getByTenant(tenantId));
     }
 
     @GetMapping("/pending")
@@ -55,4 +55,3 @@ public class PaymentController {
         return ResponseEntity.noContent().build();
     }
 }
-

@@ -24,7 +24,6 @@ public class PropertyDto {
     private Integer floors;
     private Boolean furnished;
     private List<String> amenities;
-    private String tenant;
     private Long ownerId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

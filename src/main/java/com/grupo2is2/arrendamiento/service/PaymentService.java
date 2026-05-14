@@ -8,7 +8,7 @@ public interface PaymentService {
     List<PaymentDto> getAll();
     PaymentDto getById(Long id);
     List<PaymentDto> getByContract(Long contractId);
-    List<PaymentDto> getByTenant(String tenantName);
+    List<PaymentDto> getByTenant(Long tenantId);
     List<PaymentDto> getPending();
     PaymentDto create(PaymentDto dto);
     PaymentDto update(Long id, PaymentDto dto);

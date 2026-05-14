@@ -9,6 +9,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -18,6 +20,7 @@ public class DataSeeder implements CommandLineRunner {
     private final PropertyRepository propertyRepository;
     private final ContractRepository contractRepository;
     private final PaymentRepository paymentRepository;
+    private final AmenityRepository amenityRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -53,6 +56,42 @@ public class DataSeeder implements CommandLineRunner {
                 .avatar("https://i.pravatar.cc/150?u=tenant")
                 .build());
 
+        // Seed amenities
+        List<Amenity> allAmenities = amenityRepository.saveAll(List.of(
+            Amenity.builder().name("AIRE_ACONDICIONADO").displayLabel("Aire acondicionado").build(),
+            Amenity.builder().name("ALTOS_TECHOS").displayLabel("Altos techos").build(),
+            Amenity.builder().name("BALCON").displayLabel("Balcón").build(),
+            Amenity.builder().name("BARBACOA").displayLabel("BBQ").build(),
+            Amenity.builder().name("CERCO_ELECTRICO").displayLabel("Cerco eléctrico").build(),
+            Amenity.builder().name("COCINA_AMERICANA").displayLabel("Cocina americana").build(),
+            Amenity.builder().name("COCINA_EQUIPADA").displayLabel("Cocina equipada").build(),
+            Amenity.builder().name("COCHERA_TRIPLE").displayLabel("Cochera triple").build(),
+            Amenity.builder().name("CUARTO_DE_LAVADO").displayLabel("Cuarto de lavado").build(),
+            Amenity.builder().name("CUARTO_DE_SERVICIO").displayLabel("Cuarto de servicio").build(),
+            Amenity.builder().name("ESPACIOS_ABIERTOS").displayLabel("Espacios abiertos").build(),
+            Amenity.builder().name("ESTACIONAMIENTO").displayLabel("Estacionamiento").build(),
+            Amenity.builder().name("GARAGE_2_AUTOS").displayLabel("Garaje 2 autos").build(),
+            Amenity.builder().name("GIMNASIO").displayLabel("Gimnasio").build(),
+            Amenity.builder().name("INTERNET_FIBRA_OPTICA").displayLabel("Internet fibra óptica").build(),
+            Amenity.builder().name("INTERNET_INCLUIDO").displayLabel("Internet incluido").build(),
+            Amenity.builder().name("JARDIN").displayLabel("Jardín").build(),
+            Amenity.builder().name("JARDIN_AMPLO").displayLabel("Jardín amplio").build(),
+            Amenity.builder().name("LAVADORA").displayLabel("Lavadora").build(),
+            Amenity.builder().name("LAVANDERIA_COMPARTIDA").displayLabel("Lavandería compartida").build(),
+            Amenity.builder().name("PISCINA").displayLabel("Piscina").build(),
+            Amenity.builder().name("PISCINA_COMPARTIDA").displayLabel("Piscina compartida").build(),
+            Amenity.builder().name("SEGURIDAD").displayLabel("Seguridad").build(),
+            Amenity.builder().name("SEGURIDAD_24_7").displayLabel("Seguridad 24/7").build(),
+            Amenity.builder().name("SISTEMA_DE_SEGURIDAD").displayLabel("Sistema de seguridad").build(),
+            Amenity.builder().name("TERRAZA").displayLabel("Terraza").build(),
+            Amenity.builder().name("VENTANALES").displayLabel("Ventanales").build(),
+            Amenity.builder().name("VISTA_AL_MAR").displayLabel("Vista al mar").build(),
+            Amenity.builder().name("WIFI").displayLabel("WiFi").build()
+        ));
+
+        Map<String, Amenity> amenityMap = allAmenities.stream()
+                .collect(Collectors.toMap(Amenity::getName, a -> a));
+
         Property prop1 = propertyRepository.save(Property.builder()
                 .name("Departamento Central")
                 .address("Av. Principal 123, Lima")
@@ -66,8 +105,11 @@ public class DataSeeder implements CommandLineRunner {
                 .yearBuilt(2018)
                 .floors(5)
                 .furnished(true)
-                .amenities(List.of("WiFi", "Estacionamiento", "Gimnasio"))
-                .tenant("María Inquilina")
+                .amenities(List.of(
+                    amenityMap.get("WIFI"),
+                    amenityMap.get("ESTACIONAMIENTO"),
+                    amenityMap.get("GIMNASIO")
+                ))
                 .owner(arrendador)
                 .build());
 
@@ -84,7 +126,11 @@ public class DataSeeder implements CommandLineRunner {
                 .yearBuilt(2015)
                 .floors(2)
                 .furnished(false)
-                .amenities(List.of("Piscina", "Jardín", "BBQ"))
+                .amenities(List.of(
+                    amenityMap.get("PISCINA"),
+                    amenityMap.get("JARDIN"),
+                    amenityMap.get("BARBACOA")
+                ))
                 .owner(arrendador)
                 .build());
 
@@ -101,15 +147,17 @@ public class DataSeeder implements CommandLineRunner {
                 .yearBuilt(2020)
                 .floors(1)
                 .furnished(true)
-                .amenities(List.of("WiFi", "Lavadora"))
+                .amenities(List.of(
+                    amenityMap.get("WIFI"),
+                    amenityMap.get("LAVADORA")
+                ))
                 .owner(arrendador)
                 .build());
 
         Contract contract1 = contractRepository.save(Contract.builder()
                 .code("CNT-2024-001")
-                .tenant("María Inquilina")
-                .tenantEmail("inquilino@example.com")
-                .tenantPhone("+51 999 888 777")
+                .tenant(inquilino)
+                .landlord(arrendador)
                 .property(prop1)
                 .startDate(LocalDate.of(2024, 1, 1))
                 .endDate(LocalDate.of(2024, 12, 31))
@@ -123,8 +171,7 @@ public class DataSeeder implements CommandLineRunner {
 
         paymentRepository.save(Payment.builder()
                 .contract(contract1)
-                .tenant("María Inquilina")
-                .tenantEmail("inquilino@example.com")
+                .tenant(inquilino)
                 .property(prop1.getName())
                 .propertyAddress(prop1.getAddress())
                 .amount("1200")
@@ -139,8 +186,7 @@ public class DataSeeder implements CommandLineRunner {
 
         paymentRepository.save(Payment.builder()
                 .contract(contract1)
-                .tenant("María Inquilina")
-                .tenantEmail("inquilino@example.com")
+                .tenant(inquilino)
                 .property(prop1.getName())
                 .propertyAddress(prop1.getAddress())
                 .amount("1200")
@@ -154,8 +200,7 @@ public class DataSeeder implements CommandLineRunner {
 
         paymentRepository.save(Payment.builder()
                 .contract(contract1)
-                .tenant("María Inquilina")
-                .tenantEmail("inquilino@example.com")
+                .tenant(inquilino)
                 .property(prop1.getName())
                 .propertyAddress(prop1.getAddress())
                 .amount("1200")

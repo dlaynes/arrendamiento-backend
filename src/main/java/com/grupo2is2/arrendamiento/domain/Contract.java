@@ -19,11 +19,13 @@ public class Contract {
     @Column(nullable = false, unique = true)
     private String code;
 
-    @Column(nullable = false)
-    private String tenant;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id", nullable = false)
+    private User tenant;
 
-    private String tenantEmail;
-    private String tenantPhone;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "landlord_id", nullable = false)
+    private User landlord;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "property_id")

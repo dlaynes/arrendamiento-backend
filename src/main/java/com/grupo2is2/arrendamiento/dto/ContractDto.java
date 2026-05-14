@@ -12,9 +12,12 @@ import java.util.List;
 public class ContractDto {
     private Long id;
     private String code;
-    private String tenant;
+    private Long tenantId;
+    private String tenantName;
     private String tenantEmail;
-    private String tenantPhone;
+    private Long landlordId;
+    private String landlordName;
+    private String landlordEmail;
     private Long propertyId;
     private String property;
     private String propertyAddress;

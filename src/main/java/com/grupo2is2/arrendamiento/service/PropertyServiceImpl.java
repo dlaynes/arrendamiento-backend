@@ -1,9 +1,11 @@
 package com.grupo2is2.arrendamiento.service;
 
+import com.grupo2is2.arrendamiento.domain.Amenity;
 import com.grupo2is2.arrendamiento.domain.Property;
 import com.grupo2is2.arrendamiento.domain.PropertyStatus;
 import com.grupo2is2.arrendamiento.domain.User;
 import com.grupo2is2.arrendamiento.dto.PropertyDto;
+import com.grupo2is2.arrendamiento.repository.AmenityRepository;
 import com.grupo2is2.arrendamiento.repository.PropertyRepository;
 import com.grupo2is2.arrendamiento.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,17 +20,18 @@ public class PropertyServiceImpl implements PropertyService {
 
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
+    private final AmenityRepository amenityRepository;
 
     @Override
     public List<PropertyDto> getAll() {
-        return propertyRepository.findAll().stream()
+        return propertyRepository.findAllWithOwner().stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     public PropertyDto getById(Long id) {
-        Property property = propertyRepository.findById(id)
+        Property property = propertyRepository.findByIdWithOwner(id)
                 .orElseThrow(() -> new RuntimeException("Propiedad no encontrada"));
         return toDto(property);
     }
@@ -38,13 +41,6 @@ public class PropertyServiceImpl implements PropertyService {
         User owner = userRepository.findById(ownerId)
                 .orElseThrow(() -> new RuntimeException("Propietario no encontrado"));
         return propertyRepository.findByOwner(owner).stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<PropertyDto> getByTenant(String tenantName) {
-        return propertyRepository.findByTenant(tenantName).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
@@ -61,6 +57,8 @@ public class PropertyServiceImpl implements PropertyService {
         User owner = userRepository.findById(dto.getOwnerId())
                 .orElseThrow(() -> new RuntimeException("Propietario no encontrado"));
 
+        List<Amenity> amenities = resolveAmenities(dto.getAmenities());
+
         Property property = Property.builder()
                 .name(dto.getName())
                 .address(dto.getAddress())
@@ -74,8 +72,7 @@ public class PropertyServiceImpl implements PropertyService {
                 .yearBuilt(dto.getYearBuilt())
                 .floors(dto.getFloors())
                 .furnished(dto.getFurnished())
-                .amenities(dto.getAmenities() != null ? dto.getAmenities() : List.of())
-                .tenant(dto.getTenant())
+                .amenities(amenities)
                 .owner(owner)
                 .build();
 
@@ -100,8 +97,7 @@ public class PropertyServiceImpl implements PropertyService {
         property.setYearBuilt(dto.getYearBuilt());
         property.setFloors(dto.getFloors());
         property.setFurnished(dto.getFurnished());
-        property.setAmenities(dto.getAmenities() != null ? dto.getAmenities() : List.of());
-        property.setTenant(dto.getTenant());
+        property.setAmenities(resolveAmenities(dto.getAmenities()));
 
         if (dto.getOwnerId() != null) {
             User owner = userRepository.findById(dto.getOwnerId())
@@ -118,7 +114,19 @@ public class PropertyServiceImpl implements PropertyService {
         propertyRepository.deleteById(id);
     }
 
+    private List<Amenity> resolveAmenities(List<String> names) {
+        if (names == null || names.isEmpty()) {
+            return List.of();
+        }
+        return names.stream()
+                .map(name -> amenityRepository.findByName(name)
+                        .orElseThrow(() -> new RuntimeException("Amenity no encontrada: " + name)))
+                .collect(Collectors.toList());
+    }
+
     private PropertyDto toDto(Property property) {
+        User owner = property.getOwner();
+
         return PropertyDto.builder()
                 .id(property.getId())
                 .name(property.getName())
@@ -133,9 +141,10 @@ public class PropertyServiceImpl implements PropertyService {
                 .yearBuilt(property.getYearBuilt())
                 .floors(property.getFloors())
                 .furnished(property.getFurnished())
-                .amenities(property.getAmenities())
-                .tenant(property.getTenant())
-                .ownerId(property.getOwner() != null ? property.getOwner().getId() : null)
+                .amenities(property.getAmenities().stream()
+                        .map(Amenity::getName)
+                        .collect(Collectors.toList()))
+                .ownerId(owner != null ? owner.getId() : null)
                 .createdAt(property.getCreatedAt())
                 .updatedAt(property.getUpdatedAt())
                 .build();

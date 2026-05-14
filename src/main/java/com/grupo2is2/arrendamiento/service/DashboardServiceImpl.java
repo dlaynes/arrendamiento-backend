@@ -31,7 +31,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         List<Property> myProperties = propertyRepository.findByOwner(user);
-        List<Contract> myContracts = contractRepository.findByPropertyOwnerId(userId);
+        List<Contract> myContracts = contractRepository.findByPropertyOwnerIdWithUsers(userId);
         List<Payment> myPayments = myContracts.stream()
                 .flatMap(c -> paymentRepository.findByContract(c).stream())
                 .toList();
@@ -80,14 +80,14 @@ public class DashboardServiceImpl implements DashboardService {
 
     @Override
     public List<ContractDto> getMyContracts(Long userId) {
-        return contractRepository.findByPropertyOwnerId(userId).stream()
+        return contractRepository.findByPropertyOwnerIdWithUsers(userId).stream()
                 .map(this::toContractDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<PaymentDto> getMyPayments(Long userId) {
-        List<Contract> contracts = contractRepository.findByPropertyOwnerId(userId);
+        List<Contract> contracts = contractRepository.findByPropertyOwnerIdWithUsers(userId);
         return contracts.stream()
                 .flatMap(c -> paymentRepository.findByContract(c).stream())
                 .map(this::toPaymentDto)
@@ -106,6 +106,8 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     private PropertyDto toPropertyDto(Property property) {
+        User owner = property.getOwner();
+
         return PropertyDto.builder()
                 .id(property.getId())
                 .name(property.getName())
@@ -120,24 +122,32 @@ public class DashboardServiceImpl implements DashboardService {
                 .yearBuilt(property.getYearBuilt())
                 .floors(property.getFloors())
                 .furnished(property.getFurnished())
-                .amenities(property.getAmenities())
-                .tenant(property.getTenant())
-                .ownerId(property.getOwner() != null ? property.getOwner().getId() : null)
+                .amenities(property.getAmenities().stream()
+                        .map(Amenity::getName)
+                        .collect(Collectors.toList()))
+                .ownerId(owner != null ? owner.getId() : null)
                 .createdAt(property.getCreatedAt())
                 .updatedAt(property.getUpdatedAt())
                 .build();
     }
 
     private ContractDto toContractDto(Contract contract) {
+        User tenant = contract.getTenant();
+        User landlord = contract.getLandlord();
+        Property property = contract.getProperty();
+
         return ContractDto.builder()
                 .id(contract.getId())
                 .code(contract.getCode())
-                .tenant(contract.getTenant())
-                .tenantEmail(contract.getTenantEmail())
-                .tenantPhone(contract.getTenantPhone())
-                .propertyId(contract.getProperty() != null ? contract.getProperty().getId() : null)
-                .property(contract.getProperty() != null ? contract.getProperty().getName() : null)
-                .propertyAddress(contract.getProperty() != null ? contract.getProperty().getAddress() : null)
+                .tenantId(tenant != null ? tenant.getId() : null)
+                .tenantName(tenant != null ? tenant.getName() : null)
+                .tenantEmail(tenant != null ? tenant.getEmail() : null)
+                .landlordId(landlord != null ? landlord.getId() : null)
+                .landlordName(landlord != null ? landlord.getName() : null)
+                .landlordEmail(landlord != null ? landlord.getEmail() : null)
+                .propertyId(property != null ? property.getId() : null)
+                .property(property != null ? property.getName() : null)
+                .propertyAddress(property != null ? property.getAddress() : null)
                 .startDate(contract.getStartDate())
                 .endDate(contract.getEndDate())
                 .monthlyRent(contract.getMonthlyRent())
@@ -152,11 +162,14 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     private PaymentDto toPaymentDto(Payment payment) {
+        User tenant = payment.getTenant();
+
         return PaymentDto.builder()
                 .id(payment.getId())
                 .contractId(payment.getContract() != null ? payment.getContract().getId() : null)
-                .tenant(payment.getTenant())
-                .tenantEmail(payment.getTenantEmail())
+                .tenantId(tenant != null ? tenant.getId() : null)
+                .tenantName(tenant != null ? tenant.getName() : null)
+                .tenantEmail(tenant != null ? tenant.getEmail() : null)
                 .property(payment.getProperty())
                 .propertyAddress(payment.getPropertyAddress())
                 .amount(payment.getAmount())

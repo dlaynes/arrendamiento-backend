@@ -29,9 +29,14 @@ public class ContractController {
         return ResponseEntity.ok(contractService.getByOwner(ownerId));
     }
 
-    @GetMapping("/tenant/{tenantName}")
-    public ResponseEntity<List<ContractDto>> getByTenant(@PathVariable String tenantName) {
-        return ResponseEntity.ok(contractService.getByTenant(tenantName));
+    @GetMapping("/tenant/{tenantId}")
+    public ResponseEntity<List<ContractDto>> getByTenant(@PathVariable Long tenantId) {
+        return ResponseEntity.ok(contractService.getByTenant(tenantId));
+    }
+
+    @GetMapping("/landlord/{landlordId}")
+    public ResponseEntity<List<ContractDto>> getByLandlord(@PathVariable Long landlordId) {
+        return ResponseEntity.ok(contractService.getByLandlord(landlordId));
     }
 
     @GetMapping("/property/{propertyId}")

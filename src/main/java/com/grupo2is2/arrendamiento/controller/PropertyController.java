@@ -29,11 +29,6 @@ public class PropertyController {
         return ResponseEntity.ok(propertyService.getByOwner(ownerId));
     }
 
-    @GetMapping("/tenant/{tenantName}")
-    public ResponseEntity<List<PropertyDto>> getByTenant(@PathVariable String tenantName) {
-        return ResponseEntity.ok(propertyService.getByTenant(tenantName));
-    }
-
     @GetMapping("/available")
     public ResponseEntity<List<PropertyDto>> getAvailable() {
         return ResponseEntity.ok(propertyService.getAvailable());

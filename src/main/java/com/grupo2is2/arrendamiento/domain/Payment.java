@@ -18,8 +18,10 @@ public class Payment {
     @JoinColumn(name = "contract_id")
     private Contract contract;
 
-    private String tenant;
-    private String tenantEmail;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id")
+    private User tenant;
+
     private String property;
     private String propertyAddress;
 
