@@ -13,6 +13,7 @@ public class UserDto {
     private Long id;
     private String name;
     private String email;
+    private String password;
     private UserRole role;
     private UserStatus status;
     private String avatar;

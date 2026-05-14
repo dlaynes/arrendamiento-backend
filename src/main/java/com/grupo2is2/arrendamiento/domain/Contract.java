@@ -58,11 +58,8 @@ public class Contract {
     @Column(name = "payment_day")
     private Integer paymentDay;
 
-    @ElementCollection
-    @CollectionTable(name = "contract_terms", joinColumns = @JoinColumn(name = "contract_id"))
-    @Column(name = "term", length = 1000)
-    @Builder.Default
-    private List<String> terms = new ArrayList<>();
+    @Column(name = "terms", columnDefinition = "LONGTEXT")
+    private String terms;
 
     private String notes;
 

@@ -168,7 +168,7 @@ public class DataSeeder implements CommandLineRunner {
                 .deposit("2400")
                 .status(ContractStatus.ACTIVO)
                 .paymentDay(5)
-                .terms(List.of("No se permiten mascotas", "No fumar en interiores"))
+                .terms("No se permiten mascotas\nNo fumar en interiores")
                 .notes("Contrato de primer año")
                 .build());
 

@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @Builder
@@ -30,7 +29,7 @@ public class ContractDto {
     private String deposit;
     private ContractStatus status;
     private Integer paymentDay;
-    private List<String> terms;
+    private String terms;
     private String notes;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

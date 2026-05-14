@@ -79,8 +79,11 @@ public class ContractServiceImpl implements ContractService {
         Property property = propertyRepository.findById(dto.getPropertyId())
                 .orElseThrow(() -> new RuntimeException("Propiedad no encontrada"));
 
-        User tenant = userRepository.findById(dto.getTenantId())
-                .orElseThrow(() -> new RuntimeException("Inquilino no encontrado"));
+        User tenant = null;
+        if (dto.getTenantId() != null) {
+            tenant = userRepository.findById(dto.getTenantId())
+                    .orElseThrow(() -> new RuntimeException("Inquilino no encontrado"));
+        }
 
         User landlord = userRepository.findById(dto.getLandlordId())
                 .orElseThrow(() -> new RuntimeException("Arrendador no encontrado"));
@@ -99,7 +102,7 @@ public class ContractServiceImpl implements ContractService {
                 .deposit(dto.getDeposit())
                 .status(dto.getStatus())
                 .paymentDay(dto.getPaymentDay())
-                .terms(dto.getTerms() != null ? dto.getTerms() : List.of())
+                .terms(dto.getTerms())
                 .notes(dto.getNotes())
                 .build();
 
@@ -122,19 +125,19 @@ public class ContractServiceImpl implements ContractService {
         contract.setDeposit(dto.getDeposit());
         contract.setStatus(dto.getStatus());
         contract.setPaymentDay(dto.getPaymentDay());
-        contract.setTerms(dto.getTerms() != null ? dto.getTerms() : List.of());
+        contract.setTerms(dto.getTerms());
         contract.setNotes(dto.getNotes());
 
-        if (dto.getPropertyId() != null) {
-            Property property = propertyRepository.findById(dto.getPropertyId())
-                    .orElseThrow(() -> new RuntimeException("Propiedad no encontrada"));
-            contract.setProperty(property);
-        }
+        Property property = propertyRepository.findById(dto.getPropertyId())
+                .orElseThrow(() -> new RuntimeException("Propiedad no encontrada"));
+        contract.setProperty(property);
 
         if (dto.getTenantId() != null) {
             User tenant = userRepository.findById(dto.getTenantId())
                     .orElseThrow(() -> new RuntimeException("Inquilino no encontrado"));
             contract.setTenant(tenant);
+        } else {
+            contract.setTenant(null);
         }
 
         if (dto.getLandlordId() != null) {
