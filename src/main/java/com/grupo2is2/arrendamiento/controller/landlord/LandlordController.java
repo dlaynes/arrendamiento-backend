@@ -1,6 +1,8 @@
 package com.grupo2is2.arrendamiento.controller.landlord;
 
 import com.grupo2is2.arrendamiento.domain.User;
+import com.grupo2is2.arrendamiento.domain.UserRole;
+import com.grupo2is2.arrendamiento.domain.Property;
 import com.grupo2is2.arrendamiento.dto.*;
 import com.grupo2is2.arrendamiento.repository.UserRepository;
 import com.grupo2is2.arrendamiento.service.*;
@@ -10,6 +12,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/landlord")
@@ -61,6 +65,12 @@ public class LandlordController {
         return ResponseEntity.ok(contractService.getByOwner(getCurrentUserId()));
     }
 
+    @PostMapping("/contracts")
+    public ResponseEntity<ContractDto> createContract(@RequestBody ContractDto dto) {
+        dto.setLandlordId(getCurrentUserId());
+        return ResponseEntity.ok(contractService.create(dto));
+    }
+
     @GetMapping("/contracts/{id}")
     public ResponseEntity<ContractDto> getMyContractById(@PathVariable Long id) {
         return ResponseEntity.ok(contractService.getById(id, getCurrentUserId()));
@@ -68,6 +78,7 @@ public class LandlordController {
 
     @PutMapping("/contracts/{id}")
     public ResponseEntity<ContractDto> updateContract(@PathVariable Long id, @RequestBody ContractDto dto) {
+        dto.setLandlordId(getCurrentUserId());
         return ResponseEntity.ok(contractService.update(id, dto, getCurrentUserId()));
     }
 
@@ -85,5 +96,42 @@ public class LandlordController {
     @GetMapping("/stats")
     public ResponseEntity<DashboardStatsDto> getMyStats() {
         return ResponseEntity.ok(dashboardService.getStats());
+    }
+
+    @GetMapping("/tenants")
+    public ResponseEntity<List<UserDto>> getTenants() {
+        Long currentUserId = getCurrentUserId();
+
+        // TODO: use a JOIN query in order to obtain the users
+        List<ContractDto> contracts = contractService.getByOwner(currentUserId);
+
+        List<Long> tenantIds = contracts.stream()
+                .map(ContractDto::getTenantId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        List<UserDto> dtos = tenantIds.stream()
+                .map(id -> userRepository.findById(id).orElse(null))
+                .filter(Objects::nonNull)
+                .map(this::toUserDto)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtos);
+    }
+
+    private UserDto toUserDto(User user) {
+        return UserDto.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .status(user.getStatus())
+                .avatar(user.getAvatar())
+                .lastLogin(user.getLastLogin())
+                .propertyIds(user.getProperties().stream()
+                        .map(Property::getId)
+                        .collect(Collectors.toList()))
+                .build();
     }
 }

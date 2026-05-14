@@ -93,15 +93,19 @@ public class ContractServiceImpl implements ContractService {
         if (dto.getTenantId() != null) {
             tenant = userRepository.findById(dto.getTenantId())
                     .orElseThrow(() -> new RuntimeException("Inquilino no encontrado"));
+        } else if (dto.getInvitedTenantEmail() != null) {
+            tenant = userRepository.findByEmail(dto.getInvitedTenantEmail())
+                    .orElse(null);
+            if (tenant != null && tenant.getRole() != UserRole.INQUILINO) {
+                tenant = null;
+            }
         }
 
         User landlord = userRepository.findById(dto.getLandlordId())
                 .orElseThrow(() -> new RuntimeException("Arrendador no encontrado"));
 
         String invitationToken = null;
-        Long tenantId = dto.getTenantId();
-        String newInvitedTenantEmail = dto.getInvitedTenantEmail();
-        if (tenantId == null && newInvitedTenantEmail != null) {
+        if (tenant == null && dto.getInvitedTenantEmail() != null) {
             invitationToken = generateInvitationToken();
         }
 
@@ -111,7 +115,7 @@ public class ContractServiceImpl implements ContractService {
                 .landlord(landlord)
                 .property(property)
                 .invitedTenantName(dto.getInvitedTenantName())
-                .invitedTenantEmail(newInvitedTenantEmail)
+                .invitedTenantEmail(dto.getInvitedTenantEmail())
                 .invitedTenantPhone(dto.getInvitedTenantPhone())
                 .invitationToken(invitationToken)
                 .startDate(dto.getStartDate())
@@ -133,8 +137,10 @@ public class ContractServiceImpl implements ContractService {
         Contract contract = contractRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Contrato no encontrado"));
 
-        if (contract.getTenant() != null) {
-            Long tenantId = dto.getTenantId();
+        Long tenantId = dto.getTenantId();
+
+        // Only allow changing invited data if tenant is not yet assigned
+        if (contract.getTenant() == null) {
             if (tenantId != null) {
                 User tenant = userRepository.findById(tenantId)
                         .orElseThrow(() -> new RuntimeException("Inquilino no encontrado"));
