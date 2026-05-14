@@ -100,23 +100,10 @@ public class LandlordController {
 
     @GetMapping("/tenants")
     public ResponseEntity<List<UserDto>> getTenants() {
-        Long currentUserId = getCurrentUserId();
-
-        // TODO: use a JOIN query in order to obtain the users
-        List<ContractDto> contracts = contractService.getByOwner(currentUserId);
-
-        List<Long> tenantIds = contracts.stream()
-                .map(ContractDto::getTenantId)
-                .filter(Objects::nonNull)
-                .distinct()
-                .collect(Collectors.toList());
-
-        List<UserDto> dtos = tenantIds.stream()
-                .map(id -> userRepository.findById(id).orElse(null))
-                .filter(Objects::nonNull)
+        List<User> tenants = userRepository.findTenantsByPropertyOwnerId(getCurrentUserId());
+        List<UserDto> dtos = tenants.stream()
                 .map(this::toUserDto)
                 .collect(Collectors.toList());
-
         return ResponseEntity.ok(dtos);
     }
 
