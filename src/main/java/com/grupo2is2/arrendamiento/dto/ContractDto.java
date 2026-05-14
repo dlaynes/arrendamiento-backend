@@ -23,6 +23,7 @@ public class ContractDto {
     private String invitedTenantName;
     private String invitedTenantEmail;
     private String invitedTenantPhone;
+    private String invitationToken;
     private LocalDate startDate;
     private LocalDate endDate;
     private String monthlyRent;

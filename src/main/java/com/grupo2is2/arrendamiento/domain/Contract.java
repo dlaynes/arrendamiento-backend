@@ -40,6 +40,9 @@ public class Contract {
     @Column(name = "invited_tenant_phone")
     private String invitedTenantPhone;
 
+    @Column(name = "invitation_token", unique = true)
+    private String invitationToken;
+
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
 

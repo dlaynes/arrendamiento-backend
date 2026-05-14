@@ -201,6 +201,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .invitedTenantName(contract.getInvitedTenantName())
                 .invitedTenantEmail(contract.getInvitedTenantEmail())
                 .invitedTenantPhone(contract.getInvitedTenantPhone())
+                .invitationToken(contract.getInvitationToken())
                 .startDate(contract.getStartDate())
                 .endDate(contract.getEndDate())
                 .monthlyRent(contract.getMonthlyRent())

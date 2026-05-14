@@ -11,6 +11,8 @@ import java.util.Optional;
 @Repository
 public interface ContractRepository extends JpaRepository<Contract, Long> {
 
+    Optional<Contract> findByInvitationToken(String invitationToken);
+
     @Query("SELECT c FROM Contract c LEFT JOIN FETCH c.tenant JOIN FETCH c.landlord JOIN FETCH c.property WHERE c.id = :id")
     Optional<Contract> findByIdWithUsers(Long id);
 

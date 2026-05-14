@@ -3,6 +3,7 @@ package com.grupo2is2.arrendamiento.service;
 import com.grupo2is2.arrendamiento.domain.Contract;
 import com.grupo2is2.arrendamiento.domain.Property;
 import com.grupo2is2.arrendamiento.domain.User;
+import com.grupo2is2.arrendamiento.domain.UserRole;
 import com.grupo2is2.arrendamiento.dto.ContractDto;
 import com.grupo2is2.arrendamiento.repository.ContractRepository;
 import com.grupo2is2.arrendamiento.repository.PropertyRepository;
@@ -11,7 +12,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,6 +25,12 @@ public class ContractServiceImpl implements ContractService {
     private final ContractRepository contractRepository;
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
+
+    private String generateInvitationToken() {
+        byte[] bytes = new byte[24];
+        new SecureRandom().nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
 
     @Override
     public List<ContractDto> getAll() {
@@ -88,14 +98,22 @@ public class ContractServiceImpl implements ContractService {
         User landlord = userRepository.findById(dto.getLandlordId())
                 .orElseThrow(() -> new RuntimeException("Arrendador no encontrado"));
 
+        String invitationToken = null;
+        Long tenantId = dto.getTenantId();
+        String newInvitedTenantEmail = dto.getInvitedTenantEmail();
+        if (tenantId == null && newInvitedTenantEmail != null) {
+            invitationToken = generateInvitationToken();
+        }
+
         Contract contract = Contract.builder()
                 .code(dto.getCode())
                 .tenant(tenant)
                 .landlord(landlord)
                 .property(property)
                 .invitedTenantName(dto.getInvitedTenantName())
-                .invitedTenantEmail(dto.getInvitedTenantEmail())
+                .invitedTenantEmail(newInvitedTenantEmail)
                 .invitedTenantPhone(dto.getInvitedTenantPhone())
+                .invitationToken(invitationToken)
                 .startDate(dto.getStartDate())
                 .endDate(dto.getEndDate())
                 .monthlyRent(dto.getMonthlyRent())
@@ -115,10 +133,28 @@ public class ContractServiceImpl implements ContractService {
         Contract contract = contractRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Contrato no encontrado"));
 
+        if (contract.getTenant() != null) {
+            Long tenantId = dto.getTenantId();
+            if (tenantId != null) {
+                User tenant = userRepository.findById(tenantId)
+                        .orElseThrow(() -> new RuntimeException("Inquilino no encontrado"));
+                if (tenant.getRole() != UserRole.INQUILINO) {
+                    throw new RuntimeException("Inquilino no encontrado");
+                }
+                contract.setTenant(tenant);
+            }
+            contract.setInvitedTenantName(dto.getInvitedTenantName());
+            contract.setInvitedTenantPhone(dto.getInvitedTenantPhone());
+
+            String prevInvitedTenantEmail = contract.getInvitedTenantEmail();
+            String newInvitedTenantEmail = dto.getInvitedTenantEmail();
+            if (tenantId == null && newInvitedTenantEmail != null && !Objects.equals(prevInvitedTenantEmail, newInvitedTenantEmail)) {
+                contract.setInvitedTenantEmail(dto.getInvitedTenantEmail());
+                contract.setInvitationToken(generateInvitationToken());
+            }
+        }
+
         contract.setCode(dto.getCode());
-        contract.setInvitedTenantName(dto.getInvitedTenantName());
-        contract.setInvitedTenantEmail(dto.getInvitedTenantEmail());
-        contract.setInvitedTenantPhone(dto.getInvitedTenantPhone());
         contract.setStartDate(dto.getStartDate());
         contract.setEndDate(dto.getEndDate());
         contract.setMonthlyRent(dto.getMonthlyRent());
@@ -132,12 +168,11 @@ public class ContractServiceImpl implements ContractService {
                 .orElseThrow(() -> new RuntimeException("Propiedad no encontrada"));
         contract.setProperty(property);
 
-        if (dto.getTenantId() != null) {
+        // Only allow setting tenant if not already assigned
+        if (contract.getTenant() == null && dto.getTenantId() != null) {
             User tenant = userRepository.findById(dto.getTenantId())
                     .orElseThrow(() -> new RuntimeException("Inquilino no encontrado"));
             contract.setTenant(tenant);
-        } else {
-            contract.setTenant(null);
         }
 
         if (dto.getLandlordId() != null) {
@@ -195,6 +230,7 @@ public class ContractServiceImpl implements ContractService {
                 .invitedTenantName(contract.getInvitedTenantName())
                 .invitedTenantEmail(contract.getInvitedTenantEmail())
                 .invitedTenantPhone(contract.getInvitedTenantPhone())
+                .invitationToken(contract.getInvitationToken())
                 .startDate(contract.getStartDate())
                 .endDate(contract.getEndDate())
                 .monthlyRent(contract.getMonthlyRent())

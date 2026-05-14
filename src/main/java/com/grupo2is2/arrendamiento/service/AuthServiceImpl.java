@@ -1,16 +1,21 @@
 package com.grupo2is2.arrendamiento.service;
 
+import com.grupo2is2.arrendamiento.domain.Contract;
 import com.grupo2is2.arrendamiento.domain.Property;
 import com.grupo2is2.arrendamiento.domain.User;
+import com.grupo2is2.arrendamiento.domain.UserRole;
+import com.grupo2is2.arrendamiento.domain.UserStatus;
 import com.grupo2is2.arrendamiento.dto.AuthResponse;
 import com.grupo2is2.arrendamiento.dto.LoginRequest;
 import com.grupo2is2.arrendamiento.dto.UserDto;
+import com.grupo2is2.arrendamiento.repository.ContractRepository;
 import com.grupo2is2.arrendamiento.repository.UserRepository;
 import com.grupo2is2.arrendamiento.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,7 +27,9 @@ public class AuthServiceImpl implements AuthService {
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
+    private final ContractRepository contractRepository;
     private final JwtUtil jwtUtil;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public AuthResponse login(LoginRequest request) {
@@ -42,6 +49,42 @@ public class AuthServiceImpl implements AuthService {
                 .email(user.getEmail())
                 .role(user.getRole())
                 .avatar(user.getAvatar())
+                .build();
+    }
+
+    @Override
+    public AuthResponse acceptInvitation(String token, String name, String password) {
+        Contract contract = contractRepository.findByInvitationToken(token)
+                .orElseThrow(() -> new RuntimeException("Invitación no válida o expirada"));
+
+        if (contract.getTenant() != null) {
+            throw new RuntimeException("La invitación ya fue aceptada");
+        }
+
+        User user = User.builder()
+                .name(name)
+                .email(contract.getInvitedTenantEmail())
+                .password(passwordEncoder.encode(password))
+                .role(UserRole.INQUILINO)
+                .status(UserStatus.ACTIVO)
+                .avatar(null)
+                .build();
+
+        User savedUser = userRepository.save(user);
+
+        contract.setTenant(savedUser);
+        contract.setInvitationToken(null);
+        contractRepository.save(contract);
+
+        String jwt = jwtUtil.generateToken(savedUser.getEmail());
+
+        return AuthResponse.builder()
+                .token(jwt)
+                .id(savedUser.getId())
+                .name(savedUser.getName())
+                .email(savedUser.getEmail())
+                .role(savedUser.getRole())
+                .avatar(savedUser.getAvatar())
                 .build();
     }
 
