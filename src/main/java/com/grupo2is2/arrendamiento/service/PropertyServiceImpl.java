@@ -9,6 +9,7 @@ import com.grupo2is2.arrendamiento.repository.AmenityRepository;
 import com.grupo2is2.arrendamiento.repository.PropertyRepository;
 import com.grupo2is2.arrendamiento.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -33,6 +34,16 @@ public class PropertyServiceImpl implements PropertyService {
     public PropertyDto getById(Long id) {
         Property property = propertyRepository.findByIdWithOwner(id)
                 .orElseThrow(() -> new RuntimeException("Propiedad no encontrada"));
+        return toDto(property);
+    }
+
+    @Override
+    public PropertyDto getById(Long id, Long currentUserId) {
+        Property property = propertyRepository.findByIdWithOwner(id)
+                .orElseThrow(() -> new RuntimeException("Propiedad no encontrada"));
+        if (!property.getOwner().getId().equals(currentUserId)) {
+            throw new AccessDeniedException("No tienes permiso para ver esta propiedad");
+        }
         return toDto(property);
     }
 
@@ -110,7 +121,29 @@ public class PropertyServiceImpl implements PropertyService {
     }
 
     @Override
+    public PropertyDto update(Long id, PropertyDto dto, Long currentUserId) {
+        Property property = propertyRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Propiedad no encontrada"));
+        if (!property.getOwner().getId().equals(currentUserId)) {
+            throw new AccessDeniedException("No tienes permiso para modificar esta propiedad");
+        }
+        // Force owner to stay as current user
+        dto.setOwnerId(currentUserId);
+        return update(id, dto);
+    }
+
+    @Override
     public void delete(Long id) {
+        propertyRepository.deleteById(id);
+    }
+
+    @Override
+    public void delete(Long id, Long currentUserId) {
+        Property property = propertyRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Propiedad no encontrada"));
+        if (!property.getOwner().getId().equals(currentUserId)) {
+            throw new AccessDeniedException("No tienes permiso para eliminar esta propiedad");
+        }
         propertyRepository.deleteById(id);
     }
 

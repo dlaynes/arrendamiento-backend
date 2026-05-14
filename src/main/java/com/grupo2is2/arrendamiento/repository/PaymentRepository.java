@@ -22,4 +22,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     @Query("SELECT p FROM Payment p JOIN FETCH p.tenant JOIN FETCH p.contract WHERE p.tenant.id = :tenantId")
     List<Payment> findByTenantIdWithUser(Long tenantId);
+
+    @Query("SELECT p FROM Payment p JOIN FETCH p.tenant t JOIN FETCH p.contract c JOIN FETCH c.property prop WHERE prop.owner.id = :ownerId")
+    List<Payment> findByContractPropertyOwnerId(Long ownerId);
 }

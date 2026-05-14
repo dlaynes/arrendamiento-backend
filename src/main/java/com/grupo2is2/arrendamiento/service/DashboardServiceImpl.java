@@ -10,6 +10,7 @@ import com.grupo2is2.arrendamiento.repository.PaymentRepository;
 import com.grupo2is2.arrendamiento.repository.PropertyRepository;
 import com.grupo2is2.arrendamiento.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -25,34 +26,52 @@ public class DashboardServiceImpl implements DashboardService {
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
 
-    @Override
-    public DashboardStatsDto getStats(Long userId) {
-        User user = userRepository.findById(userId)
+    private User getCurrentUser() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    }
 
-        List<Property> myProperties = propertyRepository.findByOwner(user);
-        List<Contract> myContracts = contractRepository.findByPropertyOwnerIdWithUsers(userId);
-        List<Payment> myPayments = myContracts.stream()
-                .flatMap(c -> paymentRepository.findByContract(c).stream())
-                .toList();
+    @Override
+    public DashboardStatsDto getStats() {
+        User user = getCurrentUser();
+        UserRole role = user.getRole();
 
-        long totalProperties = myProperties.size();
-        long totalContracts = myContracts.size();
-        long totalUsers = userRepository.count();
-        double totalIncome = myPayments.stream()
+        List<Property> properties;
+        List<Contract> contracts;
+        List<Payment> payments;
+
+        if (role == UserRole.ADMINISTRADOR) {
+            properties = propertyRepository.findAll();
+            contracts = contractRepository.findAllWithUsers();
+            payments = paymentRepository.findAllWithUser();
+        } else if (role == UserRole.ARRENDADOR) {
+            properties = propertyRepository.findByOwner(user);
+            contracts = contractRepository.findByPropertyOwnerIdWithUsers(user.getId());
+            payments = paymentRepository.findByContractPropertyOwnerId(user.getId());
+        } else { // INQUILINO
+            properties = List.of();
+            contracts = contractRepository.findByTenantIdWithUsers(user.getId());
+            payments = paymentRepository.findByTenantIdWithUser(user.getId());
+        }
+
+        long totalProperties = properties.size();
+        long totalContracts = contracts.size();
+        long totalUsers = (role == UserRole.ADMINISTRADOR) ? userRepository.count() : 0L;
+        double totalIncome = payments.stream()
                 .filter(p -> p.getStatus() == PaymentStatus.PAGADO)
                 .mapToDouble(p -> parseAmount(p.getAmount()))
                 .sum();
-        long pendingPayments = myPayments.stream()
+        long pendingPayments = payments.stream()
                 .filter(p -> p.getStatus() == PaymentStatus.PENDIENTE)
                 .count();
-        long activeContracts = myContracts.stream()
+        long activeContracts = contracts.stream()
                 .filter(c -> c.getStatus() == ContractStatus.ACTIVO)
                 .count();
-        long availableProperties = myProperties.stream()
+        long availableProperties = properties.stream()
                 .filter(p -> p.getStatus() == PropertyStatus.DISPONIBLE)
                 .count();
-        long overduePayments = myPayments.stream()
+        long overduePayments = payments.stream()
                 .filter(p -> p.getStatus() == PaymentStatus.VENCIDO ||
                         (p.getStatus() == PaymentStatus.PENDIENTE && p.getDueDate() != null && p.getDueDate().isBefore(LocalDate.now())))
                 .count();
@@ -70,26 +89,57 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
-    public List<PropertyDto> getMyProperties(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-        return propertyRepository.findByOwner(user).stream()
+    public List<PropertyDto> getMyProperties() {
+        User user = getCurrentUser();
+        List<Property> properties;
+
+        if (user.getRole() == UserRole.ADMINISTRADOR) {
+            properties = propertyRepository.findAllWithOwner();
+        } else if (user.getRole() == UserRole.ARRENDADOR) {
+            properties = propertyRepository.findByOwner(user);
+        } else {
+            properties = List.of();
+        }
+
+        return properties.stream()
                 .map(this::toPropertyDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<ContractDto> getMyContracts(Long userId) {
-        return contractRepository.findByPropertyOwnerIdWithUsers(userId).stream()
+    public List<ContractDto> getMyContracts() {
+        User user = getCurrentUser();
+        UserRole role = user.getRole();
+        List<Contract> contracts;
+
+        if (role == UserRole.ADMINISTRADOR) {
+            contracts = contractRepository.findAllWithUsers();
+        } else if (role == UserRole.ARRENDADOR) {
+            contracts = contractRepository.findByPropertyOwnerIdWithUsers(user.getId());
+        } else {
+            contracts = contractRepository.findByTenantIdWithUsers(user.getId());
+        }
+
+        return contracts.stream()
                 .map(this::toContractDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<PaymentDto> getMyPayments(Long userId) {
-        List<Contract> contracts = contractRepository.findByPropertyOwnerIdWithUsers(userId);
-        return contracts.stream()
-                .flatMap(c -> paymentRepository.findByContract(c).stream())
+    public List<PaymentDto> getMyPayments() {
+        User user = getCurrentUser();
+        UserRole role = user.getRole();
+        List<Payment> payments;
+
+        if (role == UserRole.ADMINISTRADOR) {
+            payments = paymentRepository.findAllWithUser();
+        } else if (role == UserRole.ARRENDADOR) {
+            payments = paymentRepository.findByContractPropertyOwnerId(user.getId());
+        } else {
+            payments = paymentRepository.findByTenantIdWithUser(user.getId());
+        }
+
+        return payments.stream()
                 .map(this::toPaymentDto)
                 .collect(Collectors.toList());
     }

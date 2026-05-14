@@ -8,8 +8,8 @@ import com.grupo2is2.arrendamiento.dto.PropertyDto;
 import java.util.List;
 
 public interface DashboardService {
-    DashboardStatsDto getStats(Long userId);
-    List<PropertyDto> getMyProperties(Long userId);
-    List<ContractDto> getMyContracts(Long userId);
-    List<PaymentDto> getMyPayments(Long userId);
+    DashboardStatsDto getStats();
+    List<PropertyDto> getMyProperties();
+    List<ContractDto> getMyContracts();
+    List<PaymentDto> getMyPayments();
 }

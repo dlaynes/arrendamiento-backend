@@ -9,6 +9,7 @@ import com.grupo2is2.arrendamiento.repository.ContractRepository;
 import com.grupo2is2.arrendamiento.repository.PaymentRepository;
 import com.grupo2is2.arrendamiento.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -33,6 +34,16 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentDto getById(Long id) {
         Payment payment = paymentRepository.findByIdWithUser(id)
                 .orElseThrow(() -> new RuntimeException("Pago no encontrado"));
+        return toDto(payment);
+    }
+
+    @Override
+    public PaymentDto getById(Long id, Long currentUserId) {
+        Payment payment = paymentRepository.findByIdWithUser(id)
+                .orElseThrow(() -> new RuntimeException("Pago no encontrado"));
+        if (!payment.getContract().getProperty().getOwner().getId().equals(currentUserId)) {
+            throw new AccessDeniedException("No tienes permiso para ver este pago");
+        }
         return toDto(payment);
     }
 
@@ -124,7 +135,27 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    public PaymentDto update(Long id, PaymentDto dto, Long currentUserId) {
+        Payment payment = paymentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pago no encontrado"));
+        if (!payment.getContract().getProperty().getOwner().getId().equals(currentUserId)) {
+            throw new AccessDeniedException("No tienes permiso para modificar este pago");
+        }
+        return update(id, dto);
+    }
+
+    @Override
     public void delete(Long id) {
+        paymentRepository.deleteById(id);
+    }
+
+    @Override
+    public void delete(Long id, Long currentUserId) {
+        Payment payment = paymentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pago no encontrado"));
+        if (!payment.getContract().getProperty().getOwner().getId().equals(currentUserId)) {
+            throw new AccessDeniedException("No tienes permiso para eliminar este pago");
+        }
         paymentRepository.deleteById(id);
     }
 

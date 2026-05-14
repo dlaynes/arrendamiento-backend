@@ -8,6 +8,7 @@ import com.grupo2is2.arrendamiento.repository.ContractRepository;
 import com.grupo2is2.arrendamiento.repository.PropertyRepository;
 import com.grupo2is2.arrendamiento.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -32,6 +33,16 @@ public class ContractServiceImpl implements ContractService {
     public ContractDto getById(Long id) {
         Contract contract = contractRepository.findByIdWithUsers(id)
                 .orElseThrow(() -> new RuntimeException("Contrato no encontrado"));
+        return toDto(contract);
+    }
+
+    @Override
+    public ContractDto getById(Long id, Long currentUserId) {
+        Contract contract = contractRepository.findByIdWithUsers(id)
+                .orElseThrow(() -> new RuntimeException("Contrato no encontrado"));
+        if (!contract.getProperty().getOwner().getId().equals(currentUserId)) {
+            throw new AccessDeniedException("No tienes permiso para ver este contrato");
+        }
         return toDto(contract);
     }
 
@@ -131,7 +142,27 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
+    public ContractDto update(Long id, ContractDto dto, Long currentUserId) {
+        Contract contract = contractRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Contrato no encontrado"));
+        if (!contract.getProperty().getOwner().getId().equals(currentUserId)) {
+            throw new AccessDeniedException("No tienes permiso para modificar este contrato");
+        }
+        return update(id, dto);
+    }
+
+    @Override
     public void delete(Long id) {
+        contractRepository.deleteById(id);
+    }
+
+    @Override
+    public void delete(Long id, Long currentUserId) {
+        Contract contract = contractRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Contrato no encontrado"));
+        if (!contract.getProperty().getOwner().getId().equals(currentUserId)) {
+            throw new AccessDeniedException("No tienes permiso para eliminar este contrato");
+        }
         contractRepository.deleteById(id);
     }
 
