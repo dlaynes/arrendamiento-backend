@@ -20,7 +20,7 @@ public class Contract {
     private String code;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false)
+    @JoinColumn(name = "tenant_id")
     private User tenant;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -28,8 +28,17 @@ public class Contract {
     private User landlord;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "property_id")
+    @JoinColumn(name = "property_id", nullable = false)
     private Property property;
+
+    @Column(name = "invited_tenant_name")
+    private String invitedTenantName;
+
+    @Column(name = "invited_tenant_email", nullable = false)
+    private String invitedTenantEmail;
+
+    @Column(name = "invited_tenant_phone")
+    private String invitedTenantPhone;
 
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;

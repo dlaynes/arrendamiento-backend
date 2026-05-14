@@ -21,6 +21,9 @@ public class ContractDto {
     private Long propertyId;
     private String property;
     private String propertyAddress;
+    private String invitedTenantName;
+    private String invitedTenantEmail;
+    private String invitedTenantPhone;
     private LocalDate startDate;
     private LocalDate endDate;
     private String monthlyRent;

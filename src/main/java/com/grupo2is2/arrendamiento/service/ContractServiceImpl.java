@@ -90,6 +90,9 @@ public class ContractServiceImpl implements ContractService {
                 .tenant(tenant)
                 .landlord(landlord)
                 .property(property)
+                .invitedTenantName(dto.getInvitedTenantName())
+                .invitedTenantEmail(dto.getInvitedTenantEmail())
+                .invitedTenantPhone(dto.getInvitedTenantPhone())
                 .startDate(dto.getStartDate())
                 .endDate(dto.getEndDate())
                 .monthlyRent(dto.getMonthlyRent())
@@ -110,6 +113,9 @@ public class ContractServiceImpl implements ContractService {
                 .orElseThrow(() -> new RuntimeException("Contrato no encontrado"));
 
         contract.setCode(dto.getCode());
+        contract.setInvitedTenantName(dto.getInvitedTenantName());
+        contract.setInvitedTenantEmail(dto.getInvitedTenantEmail());
+        contract.setInvitedTenantPhone(dto.getInvitedTenantPhone());
         contract.setStartDate(dto.getStartDate());
         contract.setEndDate(dto.getEndDate());
         contract.setMonthlyRent(dto.getMonthlyRent());
@@ -183,6 +189,9 @@ public class ContractServiceImpl implements ContractService {
                 .propertyId(property != null ? property.getId() : null)
                 .property(property != null ? property.getName() : null)
                 .propertyAddress(property != null ? property.getAddress() : null)
+                .invitedTenantName(contract.getInvitedTenantName())
+                .invitedTenantEmail(contract.getInvitedTenantEmail())
+                .invitedTenantPhone(contract.getInvitedTenantPhone())
                 .startDate(contract.getStartDate())
                 .endDate(contract.getEndDate())
                 .monthlyRent(contract.getMonthlyRent())
