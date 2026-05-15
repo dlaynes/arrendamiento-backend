@@ -26,6 +26,11 @@ public class AdminContractController {
         return ResponseEntity.ok(contractService.getById(id));
     }
 
+    @GetMapping("/property/{propertyId}")
+    public ResponseEntity<List<ContractDto>> getByProperty(@PathVariable Long propertyId) {
+        return ResponseEntity.ok(contractService.getByProperty(propertyId));
+    }
+
     @PostMapping
     public ResponseEntity<ContractDto> create(@RequestBody ContractDto dto) {
         return ResponseEntity.ok(contractService.create(dto));

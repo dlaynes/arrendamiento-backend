@@ -1,11 +1,14 @@
 package com.grupo2is2.arrendamiento.service;
 
 import com.grupo2is2.arrendamiento.domain.Amenity;
+import com.grupo2is2.arrendamiento.domain.Contract;
+import com.grupo2is2.arrendamiento.domain.ContractStatus;
 import com.grupo2is2.arrendamiento.domain.Property;
 import com.grupo2is2.arrendamiento.domain.PropertyStatus;
 import com.grupo2is2.arrendamiento.domain.User;
 import com.grupo2is2.arrendamiento.dto.PropertyDto;
 import com.grupo2is2.arrendamiento.repository.AmenityRepository;
+import com.grupo2is2.arrendamiento.repository.ContractRepository;
 import com.grupo2is2.arrendamiento.repository.PropertyRepository;
 import com.grupo2is2.arrendamiento.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +25,7 @@ public class PropertyServiceImpl implements PropertyService {
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
     private final AmenityRepository amenityRepository;
+    private final ContractRepository contractRepository;
 
     @Override
     public List<PropertyDto> getAll() {
@@ -127,7 +131,6 @@ public class PropertyServiceImpl implements PropertyService {
         if (!property.getOwner().getId().equals(currentUserId)) {
             throw new AccessDeniedException("No tienes permiso para modificar esta propiedad");
         }
-        // Force owner to stay as current user
         dto.setOwnerId(currentUserId);
         return update(id, dto);
     }
@@ -160,6 +163,14 @@ public class PropertyServiceImpl implements PropertyService {
     private PropertyDto toDto(Property property) {
         User owner = property.getOwner();
 
+        List<Contract> contracts = contractRepository.findByPropertyIdWithUsers(property.getId());
+        Contract activeContract = contracts.stream()
+                .filter(c -> c.getStatus() == ContractStatus.ACTIVO)
+                .findFirst()
+                .orElse(null);
+
+        User tenant = activeContract != null ? activeContract.getTenant() : null;
+
         return PropertyDto.builder()
                 .id(property.getId())
                 .name(property.getName())
@@ -178,6 +189,8 @@ public class PropertyServiceImpl implements PropertyService {
                         .map(Amenity::getName)
                         .collect(Collectors.toList()))
                 .ownerId(owner != null ? owner.getId() : null)
+                .tenantId(tenant != null ? tenant.getId() : null)
+                .tenantName(tenant != null ? tenant.getName() : null)
                 .createdAt(property.getCreatedAt())
                 .updatedAt(property.getUpdatedAt())
                 .build();
