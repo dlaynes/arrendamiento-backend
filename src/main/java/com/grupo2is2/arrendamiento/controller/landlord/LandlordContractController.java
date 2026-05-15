@@ -12,7 +12,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/landlord/contracts")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ARRENDADOR')")
+@PreAuthorize("hasRole('ROLE_ARRENDADOR')")
 public class LandlordContractController extends LandlordBaseController {
 
     private final ContractService contractService;

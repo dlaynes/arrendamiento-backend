@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/landlord")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ARRENDADOR')")
+@PreAuthorize("hasRole('ROLE_ARRENDADOR')")
 public class LandlordDashboardController extends LandlordBaseController {
 
     private final DashboardService dashboardService;

@@ -11,7 +11,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin/properties")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMINISTRADOR')")
+@PreAuthorize("hasRole('ROLE_ADMINISTRADOR')")
 public class AdminPropertyController {
 
     private final PropertyService propertyService;

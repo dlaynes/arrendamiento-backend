@@ -12,10 +12,10 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 
     List<Message> findByConversationIdOrderByCreatedAtAsc(Long conversationId);
 
-    @Query("SELECT COUNT(m) FROM Message m WHERE m.conversation.id = :conversationId AND m.read = false AND m.sender.id != :userId")
+    @Query("SELECT COUNT(m) FROM Message m WHERE m.conversation.id = :conversationId AND m.seen = false AND m.sender.id != :userId")
     Long countUnreadByConversationAndUser(Long conversationId, Long userId);
 
     @Modifying
-    @Query("UPDATE Message m SET m.read = true WHERE m.conversation.id = :conversationId AND m.sender.id != :userId AND m.read = false")
+    @Query("UPDATE Message m SET m.seen = true WHERE m.conversation.id = :conversationId AND m.sender.id != :userId AND m.seen = false")
     int markAsRead(Long conversationId, Long userId);
 }

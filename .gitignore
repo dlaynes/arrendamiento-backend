@@ -29,5 +29,7 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+.m2/
+
 ### VS Code ###
 .vscode/

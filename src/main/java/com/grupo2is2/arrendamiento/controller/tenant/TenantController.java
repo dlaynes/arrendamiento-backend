@@ -18,7 +18,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/tenant")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('INQUILINO')")
+@PreAuthorize("hasRole('ROLE_INQUILINO')")
 public class TenantController {
 
     private final UserRepository userRepository;

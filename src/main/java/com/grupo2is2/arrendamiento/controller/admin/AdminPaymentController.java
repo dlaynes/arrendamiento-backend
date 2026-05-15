@@ -11,7 +11,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin/payments")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMINISTRADOR')")
+@PreAuthorize("hasRole('ROLE_ADMINISTRADOR')")
 public class AdminPaymentController {
 
     private final PaymentService paymentService;

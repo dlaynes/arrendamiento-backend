@@ -24,8 +24,8 @@ public class Message {
     @Column(nullable = false, length = 2000)
     private String content;
 
-    @Column(nullable = false)
-    private Boolean read = false;
+    @Column(nullable = false, columnDefinition = "TINYINT", length = 1)
+    private Boolean seen = false;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

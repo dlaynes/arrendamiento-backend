@@ -48,7 +48,7 @@ public class MessageServiceImpl implements MessageService {
                 .conversation(conv)
                 .sender(sender)
                 .content(content)
-                .read(false)
+                .seen(false)
                 .build();
 
         Message saved = messageRepository.save(message);
@@ -84,7 +84,7 @@ public class MessageServiceImpl implements MessageService {
                 .senderName(message.getSender().getName())
                 .content(message.getContent())
                 .timestamp(message.getCreatedAt())
-                .read(message.getRead())
+                .read(message.getSeen())
                 .build();
     }
 }
