@@ -3,7 +3,9 @@ package com.grupo2is2.arrendamiento.controller.tenant;
 import com.grupo2is2.arrendamiento.domain.User;
 import com.grupo2is2.arrendamiento.dto.*;
 import com.grupo2is2.arrendamiento.repository.UserRepository;
+import com.grupo2is2.arrendamiento.dto.PropertyDto;
 import com.grupo2is2.arrendamiento.service.AuthService;
+import com.grupo2is2.arrendamiento.service.PropertyService;
 import com.grupo2is2.arrendamiento.service.ContractService;
 import com.grupo2is2.arrendamiento.service.DashboardService;
 import com.grupo2is2.arrendamiento.service.PaymentService;
@@ -18,13 +20,13 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/tenant")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ROLE_INQUILINO')")
 public class TenantController {
 
     private final UserRepository userRepository;
     private final ContractService contractService;
     private final PaymentService paymentService;
     private final DashboardService dashboardService;
+    private final PropertyService propertyService;
     private final AuthService authService;
 
     private Long getCurrentUserId() {
@@ -43,18 +45,27 @@ public class TenantController {
         return ResponseEntity.ok(authService.acceptInvitation(token, name, password));
     }
 
+    @PreAuthorize("hasAuthority('CONTRACT_READ')")
     @GetMapping("/contracts")
     public ResponseEntity<List<ContractDto>> getMyContracts() {
         return ResponseEntity.ok(contractService.getByTenant(getCurrentUserId()));
     }
 
     @GetMapping("/payments")
+    @PreAuthorize("hasAuthority('PAYMENT_READ')")
     public ResponseEntity<List<PaymentDto>> getMyPayments() {
         return ResponseEntity.ok(paymentService.getByTenant(getCurrentUserId()));
     }
 
     @GetMapping("/stats")
+    @PreAuthorize("hasAuthority('DASHBOARD_READ')")
     public ResponseEntity<DashboardStatsDto> getMyStats() {
         return ResponseEntity.ok(dashboardService.getStats());
+    }
+
+    @GetMapping("/properties")
+    @PreAuthorize("hasAuthority('PROPERTY_READ')")
+    public ResponseEntity<List<PropertyDto>> getMyProperties() {
+        return ResponseEntity.ok(propertyService.getByTenant(getCurrentUserId()));
     }
 }

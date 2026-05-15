@@ -1,6 +1,6 @@
 package com.grupo2is2.arrendamiento.controller.landlord;
 
-import com.grupo2is2.arrendamiento.dto.DashboardStatsDto;
+import com.grupo2is2.arrendamiento.dto.PaymentDto;
 import com.grupo2is2.arrendamiento.service.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -9,17 +9,17 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController
-@RequestMapping("/api/landlord/dashboard")
-@RequiredArgsConstructor
-@PreAuthorize("hasAuthority('DASHBOARD_READ')")
-public class LandlordDashboardController extends LandlordBaseController {
+import java.util.List;
 
+@RestController
+@RequestMapping("/api/landlord/payments")
+@RequiredArgsConstructor
+@PreAuthorize("hasAuthority('PAYMENT_READ')")
+public class LandlordPaymentController {
     private final DashboardService dashboardService;
 
-    @GetMapping("/stats")
-    public ResponseEntity<DashboardStatsDto> getMyStats() {
-        return ResponseEntity.ok(dashboardService.getStats());
+    @GetMapping
+    public ResponseEntity<List<PaymentDto>> getMyPayments() {
+        return ResponseEntity.ok(dashboardService.getMyPayments());
     }
-
 }

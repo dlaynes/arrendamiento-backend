@@ -11,7 +11,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin/payments")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ROLE_ADMINISTRADOR')")
+@PreAuthorize("hasAuthority('PAYMENT_READ')")
 public class AdminPaymentController {
 
     private final PaymentService paymentService;
@@ -27,16 +27,19 @@ public class AdminPaymentController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('PAYMENT_WRITE')")
     public ResponseEntity<PaymentDto> create(@RequestBody PaymentDto dto) {
         return ResponseEntity.ok(paymentService.create(dto));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('PAYMENT_WRITE')")
     public ResponseEntity<PaymentDto> update(@PathVariable Long id, @RequestBody PaymentDto dto) {
         return ResponseEntity.ok(paymentService.update(id, dto));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('PAYMENT_WRITE')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         paymentService.delete(id);
         return ResponseEntity.noContent().build();

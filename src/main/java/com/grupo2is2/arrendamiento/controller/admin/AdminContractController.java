@@ -11,7 +11,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin/contracts")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ROLE_ADMINISTRADOR')")
+@PreAuthorize("hasAuthority('CONTRACT_READ')")
 public class AdminContractController {
 
     private final ContractService contractService;
@@ -32,16 +32,19 @@ public class AdminContractController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('CONTRACT_WRITE')")
     public ResponseEntity<ContractDto> create(@RequestBody ContractDto dto) {
         return ResponseEntity.ok(contractService.create(dto));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('CONTRACT_WRITE')")
     public ResponseEntity<ContractDto> update(@PathVariable Long id, @RequestBody ContractDto dto) {
         return ResponseEntity.ok(contractService.update(id, dto));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('CONTRACT_WRITE')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         contractService.delete(id);
         return ResponseEntity.noContent().build();

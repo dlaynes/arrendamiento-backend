@@ -61,6 +61,15 @@ public class PropertyServiceImpl implements PropertyService {
     }
 
     @Override
+    public List<PropertyDto> getByTenant(Long tenantId) {
+        return contractRepository.findByTenantIdWithUsers(tenantId).stream()
+                .map(Contract::getProperty)
+                .distinct()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<PropertyDto> getAvailable() {
         return propertyRepository.findByStatus(PropertyStatus.DISPONIBLE).stream()
                 .map(this::toDto)

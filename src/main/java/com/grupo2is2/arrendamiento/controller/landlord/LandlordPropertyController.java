@@ -12,12 +12,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/landlord/properties")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ROLE_ARRENDADOR')")
+@PreAuthorize("hasAuthority('PROPERTY_READ')")
 public class LandlordPropertyController extends LandlordBaseController {
 
     private final PropertyService propertyService;
 
-    @GetMapping("/")
+    @GetMapping
     public ResponseEntity<List<PropertyDto>> getMyProperties() {
         return ResponseEntity.ok(propertyService.getByOwner(getCurrentUserId()));
     }
@@ -27,18 +27,21 @@ public class LandlordPropertyController extends LandlordBaseController {
         return ResponseEntity.ok(propertyService.getById(id, getCurrentUserId()));
     }
 
-    @PostMapping("/")
+    @PostMapping
+    @PreAuthorize("hasAuthority('PROPERTY_WRITE')")
     public ResponseEntity<PropertyDto> createProperty(@RequestBody PropertyDto dto) {
         dto.setOwnerId(getCurrentUserId());
         return ResponseEntity.ok(propertyService.create(dto));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('PROPERTY_WRITE')")
     public ResponseEntity<PropertyDto> updateProperty(@PathVariable Long id, @RequestBody PropertyDto dto) {
         return ResponseEntity.ok(propertyService.update(id, dto, getCurrentUserId()));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('PROPERTY_WRITE')")
     public ResponseEntity<Void> deleteProperty(@PathVariable Long id) {
         propertyService.delete(id, getCurrentUserId());
         return ResponseEntity.noContent().build();

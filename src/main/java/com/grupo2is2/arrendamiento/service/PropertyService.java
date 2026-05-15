@@ -9,6 +9,7 @@ public interface PropertyService {
     PropertyDto getById(Long id);
     PropertyDto getById(Long id, Long currentUserId);
     List<PropertyDto> getByOwner(Long ownerId);
+    List<PropertyDto> getByTenant(Long tenantId);
     List<PropertyDto> getAvailable();
     PropertyDto create(PropertyDto dto);
     PropertyDto update(Long id, PropertyDto dto);

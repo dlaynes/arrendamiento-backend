@@ -12,17 +12,18 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/landlord/contracts")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ROLE_ARRENDADOR')")
+@PreAuthorize("hasAuthority('CONTRACT_READ')")
 public class LandlordContractController extends LandlordBaseController {
 
     private final ContractService contractService;
 
-    @GetMapping("/")
+    @GetMapping
     public ResponseEntity<List<ContractDto>> getMyContracts() {
         return ResponseEntity.ok(contractService.getByOwner(getCurrentUserId()));
     }
 
-    @PostMapping("/")
+    @PostMapping
+    @PreAuthorize("hasAuthority('CONTRACT_WRITE')")
     public ResponseEntity<ContractDto> createContract(@RequestBody ContractDto dto) {
         dto.setLandlordId(getCurrentUserId());
         return ResponseEntity.ok(contractService.create(dto));
@@ -34,12 +35,14 @@ public class LandlordContractController extends LandlordBaseController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('CONTRACT_WRITE')")
     public ResponseEntity<ContractDto> updateContract(@PathVariable Long id, @RequestBody ContractDto dto) {
         dto.setLandlordId(getCurrentUserId());
         return ResponseEntity.ok(contractService.update(id, dto, getCurrentUserId()));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('CONTRACT_WRITE')")
     public ResponseEntity<Void> deleteContract(@PathVariable Long id) {
         contractService.delete(id, getCurrentUserId());
         return ResponseEntity.noContent().build();

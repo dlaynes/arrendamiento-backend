@@ -11,7 +11,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin/properties")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ROLE_ADMINISTRADOR')")
+@PreAuthorize("hasAuthority('PROPERTY_READ')")
 public class AdminPropertyController {
 
     private final PropertyService propertyService;
@@ -27,16 +27,19 @@ public class AdminPropertyController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('PROPERTY_WRITE')")
     public ResponseEntity<PropertyDto> create(@RequestBody PropertyDto dto) {
         return ResponseEntity.ok(propertyService.create(dto));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('PROPERTY_WRITE')")
     public ResponseEntity<PropertyDto> update(@PathVariable Long id, @RequestBody PropertyDto dto) {
         return ResponseEntity.ok(propertyService.update(id, dto));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('PROPERTY_WRITE')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         propertyService.delete(id);
         return ResponseEntity.noContent().build();
